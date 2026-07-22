@@ -153,26 +153,33 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
       </div>
 
       {/* Main Flashcard Card Flip Container */}
-      <div className="w-full h-80 sm:h-96 relative perspective-1000 mb-8 cursor-pointer select-none">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentWord.id + (isFlipped ? '-back' : '-front')}
-            initial={{ rotateY: isFlipped ? -90 : 90, opacity: 0 }}
-            animate={{ rotateY: 0, opacity: 1 }}
-            exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            onClick={() => setIsFlipped(!isFlipped)}
-            className={`w-full h-full rounded-3xl border p-6 sm:p-10 flex flex-col items-center justify-between shadow-2xl transition-all relative overflow-hidden ${
-              isFlipped
-                ? 'bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 border-indigo-500/40 text-slate-100 shadow-indigo-950/30'
-                : 'bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 border-slate-700/80 text-slate-100 shadow-slate-950/50 hover:border-slate-500'
-            }`}
+      <div
+        onClick={() => setIsFlipped((prev) => !prev)}
+        className="w-full h-80 sm:h-96 relative mb-8 cursor-pointer select-none [perspective:1000px] touch-manipulation active:scale-[0.99] transition-transform"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        <motion.div
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          style={{
+            transformStyle: 'preserve-3d',
+            WebkitTransformStyle: 'preserve-3d',
+          }}
+          className="w-full h-full relative"
+        >
+          {/* Front Side */}
+          <div
+            style={{
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+            }}
+            className="absolute inset-0 w-full h-full rounded-3xl border border-slate-700/80 p-6 sm:p-10 flex flex-col items-center justify-between shadow-2xl bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 text-slate-100 shadow-slate-950/50 hover:border-slate-500 overflow-hidden"
           >
-            {/* Card Top Indicator */}
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium">
+            {/* Front Top Indicator */}
+            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium z-10">
               <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/50">
                 <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                {isFlipped ? '反面（中文釋義）' : '正面（點擊翻卡）'}
+                <span>正面（點擊翻卡）</span>
               </span>
 
               {/* Speech Pronunciation Button */}
@@ -182,52 +189,83 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
                   e.stopPropagation();
                   speakWord(currentWord.word);
                 }}
-                className="p-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group"
+                className="p-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95"
                 title="發音"
               >
                 <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
             </div>
 
-            {/* Card Content Center */}
+            {/* Front Card Content Center */}
             <div className="flex flex-col items-center justify-center text-center my-auto px-2">
-              {!isFlipped ? (
-                /* Front Side: Word & Phonetics */
-                <div className="space-y-4">
-                  <h2 id="card-word-title" className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-sm font-sans">
-                    {currentWord.word}
-                  </h2>
-                  {currentWord.us_phonetics && (
-                    <div className="inline-block px-3.5 py-1 rounded-xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-base sm:text-lg font-mono tracking-wide">
-                      {currentWord.us_phonetics}
-                    </div>
-                  )}
-                  <p className="text-slate-400 text-xs sm:text-sm mt-4 flex items-center justify-center gap-1">
-                    <HelpCircle className="w-4 h-4 text-slate-500" />
-                    點擊卡片翻面查看中文解釋
-                  </p>
-                </div>
-              ) : (
-                /* Back Side: Paraphrase Chinese & English */
-                <div className="space-y-5 max-w-lg animate-fadeIn">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-wide font-sans">
-                    {currentWord.paraphrase_pos}
+              <div className="space-y-4">
+                <h2 id="card-word-title" className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-sm font-sans">
+                  {currentWord.word}
+                </h2>
+                {currentWord.us_phonetics && (
+                  <div className="inline-block px-3.5 py-1 rounded-xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-base sm:text-lg font-mono tracking-wide">
+                    {currentWord.us_phonetics}
                   </div>
-
-                  {currentWord.paraphrase_english && (
-                    <p className="text-slate-300 text-sm sm:text-base font-medium italic bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50">
-                      "{currentWord.paraphrase_english}"
-                    </p>
-                  )}
-
-                  <p className="text-slate-400 text-xs">
-                    英文單字：<span className="text-slate-200 font-bold">{currentWord.word}</span>
-                  </p>
-                </div>
-              )}
+                )}
+                <p className="text-slate-400 text-xs sm:text-sm mt-4 flex items-center justify-center gap-1">
+                  <HelpCircle className="w-4 h-4 text-slate-500" />
+                  點擊卡片翻面查看中文解釋
+                </p>
+              </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+
+          {/* Back Side */}
+          <div
+            style={{
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)',
+              WebkitTransform: 'rotateY(180deg)',
+            }}
+            className="absolute inset-0 w-full h-full rounded-3xl border border-indigo-500/40 p-6 sm:p-10 flex flex-col items-center justify-between shadow-2xl bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 text-slate-100 shadow-indigo-950/30 overflow-hidden"
+          >
+            {/* Back Top Indicator */}
+            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium z-10">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-900/60 border border-indigo-700/50 text-indigo-200">
+                <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
+                <span>反面（中文釋義）</span>
+              </span>
+
+              {/* Speech Pronunciation Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speakWord(currentWord.word);
+                }}
+                className="p-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95"
+                title="發音"
+              >
+                <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+
+            {/* Back Card Content Center */}
+            <div className="flex flex-col items-center justify-center text-center my-auto px-2">
+              <div className="space-y-5 max-w-lg">
+                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-wide font-sans">
+                  {currentWord.paraphrase_pos}
+                </div>
+
+                {currentWord.paraphrase_english && (
+                  <p className="text-slate-300 text-sm sm:text-base font-medium italic bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50">
+                    "{currentWord.paraphrase_english}"
+                  </p>
+                )}
+
+                <p className="text-slate-400 text-xs">
+                  英文單字：<span className="text-slate-200 font-bold">{currentWord.word}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Action Buttons below card */}
