@@ -1,0 +1,6 @@
+{
+  "name": "Vocabulary Flashcards",
+  "description": "精美流暢的單字翻卡學習 App，支援「我會了」與「我還不會」動態排程、單字列表管理及自動進度儲存。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
