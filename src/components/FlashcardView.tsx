@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Word } from '../types';
 import { speakWord } from '../utils/speech';
-import { Volume2, RotateCw, CheckCircle2, BookmarkX, Sparkles, HelpCircle, RotateCcw } from 'lucide-react';
+import { Volume2, CheckCircle2, BookmarkX, Sparkles, HelpCircle, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FlashcardViewProps {
@@ -173,45 +173,35 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
             }}
-            className="absolute inset-0 w-full h-full rounded-3xl border border-slate-700/80 p-6 sm:p-10 flex flex-col items-center justify-between shadow-2xl bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 text-slate-100 shadow-slate-950/50 hover:border-slate-500 overflow-hidden"
+            className="absolute inset-0 w-full h-full rounded-3xl border border-slate-700/80 p-6 sm:p-10 flex flex-col items-center justify-center text-center shadow-2xl bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 text-slate-100 shadow-slate-950/50 hover:border-slate-500 overflow-hidden"
           >
-            {/* Front Top Indicator */}
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium z-10">
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/50">
-                <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                <span>正面（點擊翻卡）</span>
-              </span>
-
-              {/* Speech Pronunciation Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  speakWord(currentWord.word);
-                }}
-                className="p-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95"
-                title="發音"
-              >
-                <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-            </div>
+            {/* Speech Pronunciation Button - Top Right */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                speakWord(currentWord.word);
+              }}
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2.5 rounded-full bg-slate-800/80 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95 z-20"
+              title="發音"
+            >
+              <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </button>
 
             {/* Front Card Content Center */}
-            <div className="flex flex-col items-center justify-center text-center my-auto px-2">
-              <div className="space-y-4">
-                <h2 id="card-word-title" className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-sm font-sans">
-                  {currentWord.word}
-                </h2>
-                {currentWord.us_phonetics && (
-                  <div className="inline-block px-3.5 py-1 rounded-xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-base sm:text-lg font-mono tracking-wide">
-                    {currentWord.us_phonetics}
-                  </div>
-                )}
-                <p className="text-slate-400 text-xs sm:text-sm mt-4 flex items-center justify-center gap-1">
-                  <HelpCircle className="w-4 h-4 text-slate-500" />
-                  點擊卡片翻面查看中文解釋
-                </p>
-              </div>
+            <div className="space-y-4 px-2 max-w-lg">
+              <h2 id="card-word-title" className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-sm font-sans">
+                {currentWord.word}
+              </h2>
+              {currentWord.us_phonetics && (
+                <div className="inline-block px-3.5 py-1 rounded-xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-base sm:text-lg font-mono tracking-wide">
+                  {currentWord.us_phonetics}
+                </div>
+              )}
+              <p className="text-slate-400 text-xs sm:text-sm mt-4 flex items-center justify-center gap-1">
+                <HelpCircle className="w-4 h-4 text-slate-500" />
+                點擊卡片翻面查看中文解釋
+              </p>
             </div>
           </div>
 
@@ -223,46 +213,36 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
               transform: 'rotateY(180deg)',
               WebkitTransform: 'rotateY(180deg)',
             }}
-            className="absolute inset-0 w-full h-full rounded-3xl border border-indigo-500/40 p-6 sm:p-10 flex flex-col items-center justify-between shadow-2xl bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 text-slate-100 shadow-indigo-950/30 overflow-hidden"
+            className="absolute inset-0 w-full h-full rounded-3xl border border-indigo-500/40 p-6 sm:p-10 flex flex-col items-center justify-center text-center shadow-2xl bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 text-slate-100 shadow-indigo-950/30 overflow-hidden"
           >
-            {/* Back Top Indicator */}
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-medium z-10">
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-900/60 border border-indigo-700/50 text-indigo-200">
-                <RotateCw className="w-3.5 h-3.5 text-indigo-400" />
-                <span>反面（中文釋義）</span>
-              </span>
-
-              {/* Speech Pronunciation Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  speakWord(currentWord.word);
-                }}
-                className="p-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95"
-                title="發音"
-              >
-                <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-            </div>
+            {/* Speech Pronunciation Button - Top Right */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                speakWord(currentWord.word);
+              }}
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2.5 rounded-full bg-slate-800/80 hover:bg-indigo-600 text-indigo-300 hover:text-white transition-all shadow-md group active:scale-95 z-20"
+              title="發音"
+            >
+              <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </button>
 
             {/* Back Card Content Center */}
-            <div className="flex flex-col items-center justify-center text-center my-auto px-2">
-              <div className="space-y-5 max-w-lg">
-                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-wide font-sans">
-                  {currentWord.paraphrase_pos}
-                </div>
-
-                {currentWord.paraphrase_english && (
-                  <p className="text-slate-300 text-sm sm:text-base font-medium italic bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50">
-                    "{currentWord.paraphrase_english}"
-                  </p>
-                )}
-
-                <p className="text-slate-400 text-xs">
-                  英文單字：<span className="text-slate-200 font-bold">{currentWord.word}</span>
-                </p>
+            <div className="space-y-5 max-w-lg px-2">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-wide font-sans">
+                {currentWord.paraphrase_pos}
               </div>
+
+              {currentWord.paraphrase_english && (
+                <p className="text-slate-300 text-sm sm:text-base font-medium italic bg-slate-800/50 p-3 rounded-2xl border border-slate-700/50">
+                  "{currentWord.paraphrase_english}"
+                </p>
+              )}
+
+              <p className="text-slate-400 text-xs">
+                英文單字：<span className="text-slate-200 font-bold">{currentWord.word}</span>
+              </p>
             </div>
           </div>
         </motion.div>
