@@ -30,8 +30,10 @@ export function useVocabulary() {
     }
   }, [progressMap]);
 
-  // Current active practice mode/filter: 'all' | 'learning_only' | 'mastered_only'
-  const [practiceFilter, setPracticeFilter] = useState<'all' | 'learning_only' | 'mastered_only'>('learning_only');
+  // Current active practice mode/filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only'
+  const [practiceFilter, setPracticeFilter] = useState<
+    'all' | 'learning_only' | 'difficult_only' | 'mastered_only'
+  >('learning_only');
 
   // Build current queue based on practice filter in sequential order
   const [queue, setQueue] = useState<Word[]>([]);
@@ -42,15 +44,19 @@ export function useVocabulary() {
   // Function to build queue based on filter
   const initQueue = useCallback(
     (
-      filter: 'all' | 'learning_only' | 'mastered_only' = practiceFilter,
+      filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only' = practiceFilter,
       startWordId?: string
     ) => {
       let filtered: Word[] = [];
 
       if (filter === 'learning_only') {
         filtered = allWords.filter(
-          (w) => progressMap[w.id]?.status !== 'mastered'
+          (w) =>
+            progressMap[w.id]?.status !== 'mastered' &&
+            progressMap[w.id]?.status !== 'difficult'
         );
+      } else if (filter === 'difficult_only') {
+        filtered = allWords.filter((w) => progressMap[w.id]?.status === 'difficult');
       } else if (filter === 'mastered_only') {
         filtered = allWords.filter((w) => progressMap[w.id]?.status === 'mastered');
       } else {
@@ -125,30 +131,49 @@ export function useVocabulary() {
   const markAsLearning = useCallback(() => {
     if (!currentWord) return;
 
+    const prevItem = progressMap[currentWord.id];
+    const prevWrongCount = prevItem?.wrongCount || 0;
+    const newWrongCount = prevWrongCount + 1;
+
+    // If marked "還不會" 2 or more times, automatically classify as "較不熟單字" (difficult)
+    const isNowDifficult = newWrongCount >= 2;
+    const newStatus: WordStatus = isNowDifficult ? 'difficult' : 'learning';
+
     // Update progress map
     setProgressMap((prev) => ({
       ...prev,
       [currentWord.id]: {
-        status: 'learning',
+        status: newStatus,
         lastReviewedAt: Date.now(),
         reviewCount: (prev[currentWord.id]?.reviewCount || 0) + 1,
-        wrongCount: (prev[currentWord.id]?.wrongCount || 0) + 1,
+        wrongCount: newWrongCount,
       },
     }));
 
-    // Re-insert this word 3-4 cards later in queue
-    setQueue((prevQueue) => {
-      const newQueue = [...prevQueue];
-      // Insert after ~3 positions from current index
-      const insertIndex = Math.min(currentIndex + 4, newQueue.length);
-      newQueue.splice(insertIndex, 0, currentWord);
-      return newQueue;
-    });
+    if (isNowDifficult) {
+      // Remove any future re-inserted copies of currentWord from the rest of the queue
+      // so it stops repeating and automatically transitions to "較不熟單字"
+      setQueue((prevQueue) => {
+        const before = prevQueue.slice(0, currentIndex + 1);
+        const after = prevQueue
+          .slice(currentIndex + 1)
+          .filter((w) => w.id !== currentWord.id);
+        return [...before, ...after];
+      });
+    } else {
+      // First time clicking "還不會": re-insert this word 3-4 cards later in queue
+      setQueue((prevQueue) => {
+        const newQueue = [...prevQueue];
+        const insertIndex = Math.min(currentIndex + 4, newQueue.length);
+        newQueue.splice(insertIndex, 0, currentWord);
+        return newQueue;
+      });
+    }
 
     // Move to next card
     setIsFlipped(false);
     setCurrentIndex((prev) => prev + 1);
-  }, [currentWord, currentIndex]);
+  }, [currentWord, currentIndex, progressMap]);
 
   // Action: Manually change status of any word
   const setWordStatus = useCallback((wordId: string, status: WordStatus) => {
@@ -158,12 +183,12 @@ export function useVocabulary() {
         status,
         lastReviewedAt: Date.now(),
         reviewCount: (prev[wordId]?.reviewCount || 0) + 1,
-        wrongCount: prev[wordId]?.wrongCount || 0,
+        wrongCount: status === 'difficult' ? Math.max(2, prev[wordId]?.wrongCount || 2) : prev[wordId]?.wrongCount || 0,
       },
     }));
   }, []);
 
-  // Action: Reset all progress (clear all mastered & learning statuses)
+  // Action: Reset all progress (clear all mastered, difficult & learning statuses)
   const resetAllProgress = useCallback(() => {
     setProgressMap({});
     try {
@@ -182,18 +207,21 @@ export function useVocabulary() {
   const stats = useMemo(() => {
     const total = allWords.length;
     let masteredCount = 0;
+    let difficultCount = 0;
     let learningCount = 0;
 
     Object.values(progressMap).forEach((p) => {
       if ((p as WordProgressItem)?.status === 'mastered') masteredCount++;
+      else if ((p as WordProgressItem)?.status === 'difficult') difficultCount++;
       else if ((p as WordProgressItem)?.status === 'learning') learningCount++;
     });
 
-    const unseenCount = Math.max(0, total - masteredCount - learningCount);
+    const unseenCount = Math.max(0, total - masteredCount - difficultCount - learningCount);
 
     return {
       total,
       masteredCount,
+      difficultCount,
       learningCount,
       unseenCount,
       progressPercentage: total > 0 ? Math.round((masteredCount / total) * 100) : 0,
@@ -203,6 +231,10 @@ export function useVocabulary() {
   // Lists of words for tabs
   const learningWords = useMemo(() => {
     return allWords.filter((w) => progressMap[w.id]?.status === 'learning');
+  }, [allWords, progressMap]);
+
+  const difficultWords = useMemo(() => {
+    return allWords.filter((w) => progressMap[w.id]?.status === 'difficult');
   }, [allWords, progressMap]);
 
   const masteredWords = useMemo(() => {
@@ -228,6 +260,7 @@ export function useVocabulary() {
     practiceFilter,
     stats,
     learningWords,
+    difficultWords,
     masteredWords,
     unseenWords,
     progressMap,

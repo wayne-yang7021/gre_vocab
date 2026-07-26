@@ -1,4 +1,4 @@
-export type WordStatus = 'learning' | 'mastered';
+export type WordStatus = 'learning' | 'difficult' | 'mastered';
 
 export interface RawWordItem {
   word: string;
@@ -24,5 +24,5 @@ export interface WordProgressItem {
 
 export type WordProgressMap = Record<string, WordProgressItem>;
 
-export type AppView = 'flashcards' | 'learning' | 'mastered' | 'all';
+export type AppView = 'flashcards' | 'learning' | 'difficult' | 'mastered' | 'all';
 

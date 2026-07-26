@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppView } from '../types';
-import { Layers, BookmarkX, CheckCircle2, BookOpen, RotateCcw } from 'lucide-react';
+import { Layers, BookmarkX, Flame, CheckCircle2, BookOpen, RotateCcw } from 'lucide-react';
 
 interface NavbarProps {
   currentView: AppView;
@@ -8,6 +8,7 @@ interface NavbarProps {
   stats: {
     total: number;
     masteredCount: number;
+    difficultCount: number;
     learningCount: number;
     unseenCount: number;
     progressPercentage: number;
@@ -85,6 +86,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            id="tab-difficult"
+            onClick={() => setCurrentView('difficult')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+              currentView === 'difficult'
+                ? 'bg-rose-600 text-white shadow-sm shadow-rose-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Flame className="w-4 h-4 text-rose-400" />
+            <span>較不熟單字</span>
+            <span className="ml-1 px-1.5 py-0.2 bg-rose-950/80 text-rose-300 text-[11px] font-semibold rounded-md border border-rose-800/50">
+              {stats.difficultCount}
+            </span>
+          </button>
+
+          <button
             id="tab-mastered"
             onClick={() => setCurrentView('mastered')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
@@ -117,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="btn-reset-progress"
             onClick={onReset}
-            title="把所有學會的單字重置為未學過"
+            title="把所有學習進度重置為未學過"
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-rose-300 hover:text-rose-100 bg-rose-950/50 hover:bg-rose-900/80 border border-rose-800/60 rounded-xl transition-all ml-auto shrink-0 shadow-sm"
           >
             <RotateCcw className="w-3.5 h-3.5" />

@@ -26,12 +26,13 @@ export default function App() {
     practiceFilter,
     stats,
     learningWords,
+    difficultWords,
     masteredWords,
     progressMap,
   } = useVocabulary();
 
   const handleStartPracticeWithFilter = (
-    filter: 'all' | 'learning_only' | 'mastered_only',
+    filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only',
     startWordId?: string
   ) => {
     initQueue(filter, startWordId);
@@ -79,13 +80,26 @@ export default function App() {
         {currentView === 'learning' && (
           <WordListView
             title="還不會的單字"
-            description="這些是你在翻卡練習中選擇「我還不會」的單字。系統會將他們保留在此處，你可以隨時點擊按鈕進行針對性練習。"
+            description="這些是你在翻卡練習中選擇「我還不會」的單字。點選滿 2 次「我還不會」時會自動升級進入「較不熟單字」區。"
             words={learningWords}
             progressMap={progressMap}
             onSetStatus={setWordStatus}
             onStartPractice={(filter, startWordId) => handleStartPracticeWithFilter(filter, startWordId)}
             onReset={handleTriggerReset}
             currentListType="learning"
+          />
+        )}
+
+        {currentView === 'difficult' && (
+          <WordListView
+            title="較不熟單字"
+            description="在翻卡練習中選擇「我還不會」累積達到 2 次的單字會自動進入此區，並且不再於一般練習中無限循環，以便你隨時進行針對性特訓！"
+            words={difficultWords}
+            progressMap={progressMap}
+            onSetStatus={setWordStatus}
+            onStartPractice={(filter, startWordId) => handleStartPracticeWithFilter(filter, startWordId)}
+            onReset={handleTriggerReset}
+            currentListType="difficult"
           />
         )}
 
@@ -131,7 +145,7 @@ export default function App() {
               </div>
               <h3 className="text-xl font-bold text-slate-100 mb-2">確定要重置所有學習進度？</h3>
               <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                將把「已學會」（目前 {stats.masteredCount} 個）與「還不會」的單字進度全部清空，將所有單字歸零並重設為初始未學過狀態。
+                將把「已學會」（{stats.masteredCount} 個）、「較不熟」（{stats.difficultCount} 個）與「還不會」的單字進度全部清空，重設為初始狀態。
               </p>
               <div className="flex items-center justify-end gap-3">
                 <button

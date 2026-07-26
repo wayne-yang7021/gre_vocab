@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Word, WordProgressMap, WordStatus } from '../types';
 import { speakWord } from '../utils/speech';
-import { Search, Volume2, CheckCircle2, BookmarkX, Play, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Search, Volume2, CheckCircle2, BookmarkX, Flame, Play, ArrowUpDown, RefreshCw } from 'lucide-react';
 
 interface WordListViewProps {
   title: string;
@@ -9,9 +9,9 @@ interface WordListViewProps {
   words: Word[];
   progressMap: WordProgressMap;
   onSetStatus: (wordId: string, status: WordStatus) => void;
-  onStartPractice: (filter: 'all' | 'learning_only' | 'mastered_only', startWordId?: string) => void;
+  onStartPractice: (filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only', startWordId?: string) => void;
   onReset?: () => void;
-  currentListType: 'learning' | 'mastered' | 'all';
+  currentListType: 'learning' | 'difficult' | 'mastered' | 'all';
 }
 
 export const WordListView: React.FC<WordListViewProps> = ({
@@ -56,6 +56,8 @@ export const WordListView: React.FC<WordListViewProps> = ({
   const practiceFilterParam =
     currentListType === 'learning'
       ? 'learning_only'
+      : currentListType === 'difficult'
+      ? 'difficult_only'
       : currentListType === 'mastered'
       ? 'mastered_only'
       : 'all';
@@ -67,6 +69,7 @@ export const WordListView: React.FC<WordListViewProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
             {currentListType === 'learning' && <BookmarkX className="w-6 h-6 text-amber-400" />}
+            {currentListType === 'difficult' && <Flame className="w-6 h-6 text-rose-400" />}
             {currentListType === 'mastered' && <CheckCircle2 className="w-6 h-6 text-emerald-400" />}
             {title}
             <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 ml-2">
@@ -168,6 +171,7 @@ export const WordListView: React.FC<WordListViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredWords.map((item) => {
             const status = progressMap[item.id]?.status;
+            const wrongCount = progressMap[item.id]?.wrongCount || 0;
             return (
               <div
                 key={item.id}
@@ -206,11 +210,15 @@ export const WordListView: React.FC<WordListViewProps> = ({
                 </div>
 
                 {/* Bottom Row: Status Badge & Quick Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
                   <div className="flex items-center gap-2">
                     {status === 'mastered' ? (
                       <span className="flex items-center gap-1 text-emerald-400 font-medium bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/50">
                         <CheckCircle2 className="w-3.5 h-3.5" /> 已學會
+                      </span>
+                    ) : status === 'difficult' ? (
+                      <span className="flex items-center gap-1 text-rose-400 font-medium bg-rose-950/60 px-2.5 py-0.5 rounded-full border border-rose-800/50">
+                        <Flame className="w-3.5 h-3.5" /> 較不熟 ({wrongCount} 次不熟)
                       </span>
                     ) : status === 'learning' ? (
                       <span className="flex items-center gap-1 text-amber-400 font-medium bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800/50">
@@ -223,18 +231,29 @@ export const WordListView: React.FC<WordListViewProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {status !== 'mastered' ? (
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    {status !== 'mastered' && (
                       <button
                         onClick={() => onSetStatus(item.id, 'mastered')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-800/60 transition-colors font-medium text-[11px]"
+                        className="px-2 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-800/60 transition-colors font-medium text-[11px]"
                       >
-                        標示為已學會
+                        標示已學會
                       </button>
-                    ) : (
+                    )}
+
+                    {status !== 'difficult' && (
+                      <button
+                        onClick={() => onSetStatus(item.id, 'difficult')}
+                        className="px-2 py-1 rounded-lg bg-rose-950/80 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-800/60 transition-colors font-medium text-[11px]"
+                      >
+                        設為較不熟
+                      </button>
+                    )}
+
+                    {status !== 'learning' && (
                       <button
                         onClick={() => onSetStatus(item.id, 'learning')}
-                        className="px-2.5 py-1 rounded-lg bg-amber-950/80 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-800/60 transition-colors font-medium text-[11px]"
+                        className="px-2 py-1 rounded-lg bg-amber-950/80 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-800/60 transition-colors font-medium text-[11px]"
                       >
                         改為學習中
                       </button>

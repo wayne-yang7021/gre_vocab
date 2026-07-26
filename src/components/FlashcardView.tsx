@@ -12,12 +12,16 @@ interface FlashcardViewProps {
   setIsFlipped: (flipped: boolean | ((prev: boolean) => boolean)) => void;
   onMastered: () => void;
   onLearning: () => void;
-  onInitQueue: (filter: 'all' | 'learning_only' | 'mastered_only', startWordId?: string) => void;
+  onInitQueue: (
+    filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only',
+    startWordId?: string
+  ) => void;
   onReset: () => void;
-  practiceFilter: 'all' | 'learning_only' | 'mastered_only';
+  practiceFilter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only';
   stats: {
     total: number;
     masteredCount: number;
+    difficultCount: number;
     learningCount: number;
     unseenCount: number;
   };
@@ -102,20 +106,30 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
         {/* Practice Filter Scope */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <span className="text-xs font-semibold text-slate-400">練習範圍:</span>
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium overflow-x-auto max-w-full">
             <button
               onClick={() => onInitQueue('learning_only')}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap ${
                 practiceFilter === 'learning_only'
                   ? 'bg-amber-600 text-white font-semibold shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              未學過 ({stats.total - stats.masteredCount})
+              未學過 ({stats.total - stats.masteredCount - stats.difficultCount})
+            </button>
+            <button
+              onClick={() => onInitQueue('difficult_only')}
+              className={`px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap ${
+                practiceFilter === 'difficult_only'
+                  ? 'bg-rose-600 text-white font-semibold shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              較不熟 ({stats.difficultCount})
             </button>
             <button
               onClick={() => onInitQueue('mastered_only')}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap ${
                 practiceFilter === 'mastered_only'
                   ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -125,13 +139,13 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
             </button>
             <button
               onClick={() => onInitQueue('all')}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap ${
                 practiceFilter === 'all'
                   ? 'bg-indigo-600 text-white font-semibold shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              全部單字 ({stats.total})
+              全部 ({stats.total})
             </button>
           </div>
         </div>
