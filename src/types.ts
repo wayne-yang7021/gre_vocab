@@ -24,5 +24,5 @@ export interface WordProgressItem {
 
 export type WordProgressMap = Record<string, WordProgressItem>;
 
-export type AppView = 'flashcards' | 'learning' | 'difficult' | 'mastered' | 'all';
+export type AppView = 'flashcards' | 'learning' | 'difficult' | 'mastered' | 'all' | 'add_word';
 

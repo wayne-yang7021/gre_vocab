@@ -3,6 +3,7 @@ import { useVocabulary } from './hooks/useVocabulary';
 import { Navbar } from './components/Navbar';
 import { FlashcardView } from './components/FlashcardView';
 import { WordListView } from './components/WordListView';
+import { AddWordView } from './components/AddWordView';
 import { AppView } from './types';
 import { AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -28,6 +29,9 @@ export default function App() {
     learningWords,
     difficultWords,
     masteredWords,
+    customWords,
+    addCustomWord,
+    deleteCustomWord,
     progressMap,
   } = useVocabulary();
 
@@ -126,6 +130,16 @@ export default function App() {
             onStartPractice={(filter, startWordId) => handleStartPracticeWithFilter(filter, startWordId)}
             onReset={handleTriggerReset}
             currentListType="all"
+          />
+        )}
+
+        {currentView === 'add_word' && (
+          <AddWordView
+            customWords={customWords}
+            progressMap={progressMap}
+            onAddCustomWord={addCustomWord}
+            onDeleteCustomWord={deleteCustomWord}
+            onStartPractice={(filter, startWordId) => handleStartPracticeWithFilter(filter, startWordId)}
           />
         )}
       </main>

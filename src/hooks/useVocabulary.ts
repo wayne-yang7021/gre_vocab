@@ -4,9 +4,73 @@ import { getAllWords } from '../utils/dataLoader';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'vocab_flashcards_progress_v1';
+const CUSTOM_WORDS_KEY = 'vocab_custom_words_v1';
 
 export function useVocabulary() {
-  const allWords = useMemo(() => getAllWords(), []);
+  const builtinWords = useMemo(() => getAllWords(), []);
+
+  // Custom user-added words loaded from localStorage
+  const [customWords, setCustomWords] = useState<Word[]>(() => {
+    try {
+      const saved = localStorage.getItem(CUSTOM_WORDS_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load custom words from localStorage', e);
+    }
+    return [];
+  });
+
+  // Save customWords to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(customWords));
+    } catch (e) {
+      console.error('Failed to save custom words to localStorage', e);
+    }
+  }, [customWords]);
+
+  // Combined words (builtin + custom)
+  const allWords = useMemo(() => {
+    return [...builtinWords, ...customWords];
+  }, [builtinWords, customWords]);
+
+  // Add new custom word
+  const addCustomWord = useCallback(
+    (newWordData: {
+      word: string;
+      us_phonetics?: string;
+      paraphrase_pos: string;
+      paraphrase_english?: string;
+    }) => {
+      const cleanWordStr = newWordData.word.trim();
+      if (!cleanWordStr) return null;
+
+      const newWord: Word = {
+        id: `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        word: cleanWordStr,
+        us_phonetics: newWordData.us_phonetics?.trim() || '',
+        paraphrase_pos: newWordData.paraphrase_pos.trim(),
+        paraphrase_english: newWordData.paraphrase_english?.trim() || '',
+      };
+
+      setCustomWords((prev) => [newWord, ...prev]);
+      return newWord;
+    },
+    []
+  );
+
+  // Delete custom word
+  const deleteCustomWord = useCallback((wordId: string) => {
+    setCustomWords((prev) => prev.filter((w) => w.id !== wordId));
+    // Optionally clean up progressMap entry
+    setProgressMap((prev) => {
+      const copy = { ...prev };
+      delete copy[wordId];
+      return copy;
+    });
+  }, []);
 
   // Load progress from localStorage
   const [progressMap, setProgressMap] = useState<WordProgressMap>(() => {
@@ -263,6 +327,9 @@ export function useVocabulary() {
     difficultWords,
     masteredWords,
     unseenWords,
+    customWords,
+    addCustomWord,
+    deleteCustomWord,
     progressMap,
   };
 }

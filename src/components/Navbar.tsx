@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppView } from '../types';
-import { Layers, BookmarkX, Flame, CheckCircle2, BookOpen, RotateCcw } from 'lucide-react';
+import { Layers, BookmarkX, Flame, CheckCircle2, BookOpen, PlusCircle, RotateCcw } from 'lucide-react';
 
 interface NavbarProps {
   currentView: AppView;
@@ -129,6 +129,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <BookOpen className="w-4 h-4" />
             <span>全部單字</span>
             <span className="text-[11px] text-slate-400 font-normal">({stats.total})</span>
+          </button>
+
+          <button
+            id="tab-add-word"
+            onClick={() => setCurrentView('add_word')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+              currentView === 'add_word'
+                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 font-semibold'
+                : 'text-indigo-300 hover:text-indigo-100 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-800/50'
+            }`}
+          >
+            <PlusCircle className="w-4 h-4 text-indigo-400" />
+            <span>新增單字</span>
           </button>
 
           <button
