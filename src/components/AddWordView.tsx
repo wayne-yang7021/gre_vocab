@@ -24,6 +24,7 @@ interface TranslationInput {
 }
 
 interface AddWordViewProps {
+  allWords: Word[];
   customWords: Word[];
   progressMap: WordProgressMap;
   onAddCustomWord: (data: {
@@ -51,6 +52,7 @@ const POS_OPTIONS = [
 ];
 
 export const AddWordView: React.FC<AddWordViewProps> = ({
+  allWords,
   customWords,
   progressMap,
   onAddCustomWord,
@@ -80,9 +82,17 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
   // Custom list filter query
   const [customSearchQuery, setCustomSearchQuery] = useState('');
 
+  // Check if word already exists in library
+  const checkDuplicateWord = (wordStr: string) => {
+    const clean = wordStr.trim().toLowerCase();
+    if (!clean) return null;
+    return allWords.find((w) => w.word.trim().toLowerCase() === clean);
+  };
+
   // Handle auto lookup online (Free Dictionary API, zero AI key required)
   const handleAutoLookup = async () => {
-    if (!englishWord.trim()) {
+    const cleanQuery = englishWord.trim();
+    if (!cleanQuery) {
       setSearchStatus({
         type: 'warning',
         message: '請先輸入英文單字再進行查詢',
@@ -90,10 +100,17 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
       return;
     }
 
+    const existingWord = checkDuplicateWord(cleanQuery);
+    if (existingWord) {
+      setFormErrorMessage(`單字 「${existingWord.word}」 已存在於單字庫中，請勿重複新增！`);
+    } else {
+      setFormErrorMessage('');
+    }
+
     setIsSearching(true);
     setSearchStatus({ type: null, message: '' });
 
-    const result = await lookupWordOnline(englishWord.trim());
+    const result = await lookupWordOnline(cleanQuery);
     setIsSearching(false);
 
     if (result.found) {
@@ -114,8 +131,10 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
       }
 
       setSearchStatus({
-        type: 'success',
-        message: '已成功線上抓取音標、英文釋義並自動翻譯成中文！您可以直接確認或微調內容：',
+        type: existingWord ? 'warning' : 'success',
+        message: existingWord
+          ? `已線上抓取內容，但請注意：單字 「${existingWord.word}」 已經在單字庫中囉！`
+          : '已成功線上抓取音標、英文釋義並自動翻譯成中文！您可以直接確認或微調內容：',
       });
     } else {
       setSearchStatus({
@@ -155,6 +174,13 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
     const cleanWord = englishWord.trim();
     if (!cleanWord) {
       setFormErrorMessage('請輸入英文單字');
+      return;
+    }
+
+    // Check duplicate
+    const existing = checkDuplicateWord(cleanWord);
+    if (existing) {
+      setFormErrorMessage(`單字 「${existing.word}」 已存在於單字庫中，無法重複新增！`);
       return;
     }
 

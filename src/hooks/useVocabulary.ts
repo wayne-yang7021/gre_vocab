@@ -47,6 +47,11 @@ export function useVocabulary() {
       const cleanWordStr = newWordData.word.trim();
       if (!cleanWordStr) return null;
 
+      const isDup = allWords.some(
+        (w) => w.word.trim().toLowerCase() === cleanWordStr.toLowerCase()
+      );
+      if (isDup) return null;
+
       const newWord: Word = {
         id: `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         word: cleanWordStr,
@@ -58,7 +63,7 @@ export function useVocabulary() {
       setCustomWords((prev) => [newWord, ...prev]);
       return newWord;
     },
-    []
+    [allWords]
   );
 
   // Delete custom word

@@ -135,6 +135,7 @@ export default function App() {
 
         {currentView === 'add_word' && (
           <AddWordView
+            allWords={allWords}
             customWords={customWords}
             progressMap={progressMap}
             onAddCustomWord={addCustomWord}
