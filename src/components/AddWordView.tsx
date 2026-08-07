@@ -238,13 +238,13 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-fadeIn">
       {/* View Header */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-8 shadow-xl">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2.5 rounded-2xl bg-indigo-950/80 border border-indigo-800/60 text-indigo-400">
+          <div className="p-2.5 rounded-2xl bg-indigo-950/80 border border-indigo-800/60 text-indigo-400 shrink-0">
             <BookPlus className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-100">新增自訂單字</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-100">新增自訂單字</h2>
             <p className="text-xs sm:text-sm text-slate-400">
               您可以自行新增生字集。輸入英文後可一鍵線上免費查詢音標與釋義，並可新增多個中文翻譯！
             </p>
@@ -253,23 +253,23 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
       </div>
 
       {/* Add Word Form Card */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-3xl p-4 sm:p-8 shadow-xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
+          <h3 className="text-base sm:text-lg font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
             單字內容設定
           </h3>
 
           {/* Form Top Alert Messages */}
           {formSuccessMessage && (
-            <div className="flex items-center gap-2.5 p-4 bg-emerald-950/80 border border-emerald-800/80 text-emerald-300 rounded-2xl text-sm font-medium">
+            <div className="flex items-center gap-2.5 p-3.5 sm:p-4 bg-emerald-950/80 border border-emerald-800/80 text-emerald-300 rounded-2xl text-xs sm:text-sm font-medium">
               <Check className="w-5 h-5 text-emerald-400 shrink-0" />
               <span>{formSuccessMessage}</span>
             </div>
           )}
 
           {formErrorMessage && (
-            <div className="flex items-center gap-2.5 p-4 bg-rose-950/80 border border-rose-800/80 text-rose-300 rounded-2xl text-sm font-medium">
+            <div className="flex items-center gap-2.5 p-3.5 sm:p-4 bg-rose-950/80 border border-rose-800/80 text-rose-300 rounded-2xl text-xs sm:text-sm font-medium">
               <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
               <span>{formErrorMessage}</span>
             </div>
@@ -286,7 +286,7 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
                 value={englishWord}
                 onChange={(e) => setEnglishWord(e.target.value)}
                 placeholder="例如：ephemeral, resilient..."
-                className="flex-1 bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-sans text-base shadow-inner"
+                className="flex-1 min-w-0 w-full bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-sans text-base shadow-inner"
               />
               <button
                 type="button"
@@ -333,47 +333,63 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
               value={phonetics}
               onChange={(e) => setPhonetics(e.target.value)}
               placeholder="例如：/ɪˈfɛmərəl/"
-              className="w-full bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2.5 text-indigo-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm shadow-inner"
+              className="w-full min-w-0 bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-2.5 text-indigo-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-mono text-sm shadow-inner"
             />
           </div>
 
-          {/* 3. Chinese Translations (Supports Multiple) */}
+          {/* 3. Chinese Translations (Supports Multiple & RWD Mobile Layout) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="block text-xs sm:text-sm font-semibold text-slate-300">
                 中文翻譯 <span className="text-rose-400">*</span>{' '}
-                <span className="text-slate-400 font-normal text-xs">(可新增多個詞性與中文解釋)</span>
+                <span className="text-slate-400 font-normal text-xs block sm:inline">(可新增多個詞性與中文解釋)</span>
               </label>
               <button
                 type="button"
                 onClick={handleAddTranslationRow}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium border border-slate-700/80 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium border border-slate-700/80 transition-colors self-start sm:self-auto shrink-0"
               >
                 <Plus className="w-3.5 h-3.5 text-indigo-400" />
                 <span>新增一組中文解釋</span>
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {translations.map((item, index) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2.5 bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800"
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 bg-slate-950/80 p-3 sm:p-2.5 rounded-2xl border border-slate-800 w-full min-w-0"
                 >
-                  <span className="text-xs font-mono text-slate-500 pl-1">{index + 1}.</span>
+                  <div className="flex items-center gap-2 shrink-0 justify-between sm:justify-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-slate-500 pl-1">{index + 1}.</span>
 
-                  {/* POS Dropdown */}
-                  <select
-                    value={item.pos}
-                    onChange={(e) => handleUpdateTranslation(item.id, 'pos', e.target.value)}
-                    className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-indigo-300 focus:outline-none focus:border-indigo-500 shrink-0 font-medium"
-                  >
-                    {POS_OPTIONS.map((pos) => (
-                      <option key={pos.value} value={pos.value}>
-                        {pos.label}
-                      </option>
-                    ))}
-                  </select>
+                      {/* POS Dropdown */}
+                      <select
+                        value={item.pos}
+                        onChange={(e) => handleUpdateTranslation(item.id, 'pos', e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-indigo-300 focus:outline-none focus:border-indigo-500 shrink-0 font-medium"
+                      >
+                        {POS_OPTIONS.map((pos) => (
+                          <option key={pos.value} value={pos.value}>
+                            {pos.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Delete Translation Row Button for Mobile (top right) */}
+                    {translations.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTranslationRow(item.id)}
+                        className="p-1.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors sm:hidden"
+                        title="刪除此組翻譯"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
                   {/* Meaning Text Input */}
                   <input
@@ -383,15 +399,15 @@ export const AddWordView: React.FC<AddWordViewProps> = ({
                       handleUpdateTranslation(item.id, 'meaning', e.target.value)
                     }
                     placeholder="輸入中文解釋，例如：轉瞬即逝的..."
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                    className="flex-1 min-w-0 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
                   />
 
-                  {/* Delete Translation Row Button */}
+                  {/* Delete Translation Row Button for Desktop */}
                   {translations.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveTranslationRow(item.id)}
-                      className="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      className="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors hidden sm:block shrink-0"
                       title="刪除此組翻譯"
                     >
                       <Trash2 className="w-4 h-4" />
