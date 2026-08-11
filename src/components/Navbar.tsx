@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppView } from '../types';
-import { Layers, BookmarkX, Flame, CheckCircle2, BookOpen, PlusCircle, RotateCcw } from 'lucide-react';
+import { Layers, BookmarkX, Flame, CheckCircle2, BookOpen, PlusCircle, RotateCcw, Database, Cloud, User } from 'lucide-react';
+import { UserAccount } from '../lib/firebase';
 
 interface NavbarProps {
   currentView: AppView;
@@ -14,6 +15,9 @@ interface NavbarProps {
     progressPercentage: number;
   };
   onReset: () => void;
+  onOpenBackupModal: () => void;
+  cloudAccount: UserAccount | null;
+  onOpenCloudModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,6 +25,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   setCurrentView,
   stats,
   onReset,
+  onOpenBackupModal,
+  cloudAccount,
+  onOpenCloudModal,
 }) => {
   return (
     <header id="main-header" className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-sm">
@@ -142,6 +149,33 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <PlusCircle className="w-4 h-4 text-indigo-400" />
             <span>新增單字</span>
+          </button>
+
+          <button
+            id="btn-cloud-db"
+            onClick={onOpenCloudModal}
+            title="設定雲端資料庫與帳號同步"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl transition-all whitespace-nowrap shadow-sm border ${
+              cloudAccount
+                ? 'bg-emerald-950/80 text-emerald-300 hover:text-white hover:bg-emerald-900 border-emerald-700/60 font-semibold'
+                : 'bg-indigo-950/60 text-indigo-300 hover:text-white hover:bg-indigo-900/80 border-indigo-800/60'
+            }`}
+          >
+            <Cloud className={`w-3.5 h-3.5 ${cloudAccount ? 'text-emerald-400' : 'text-indigo-400'}`} />
+            <span>{cloudAccount ? cloudAccount.username : '雲端資料庫'}</span>
+            {cloudAccount && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+            )}
+          </button>
+
+          <button
+            id="btn-backup-transfer"
+            onClick={onOpenBackupModal}
+            title="本機 JSON 備份與匯入轉移"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 rounded-xl transition-all whitespace-nowrap shadow-sm"
+          >
+            <Database className="w-3.5 h-3.5 text-slate-400" />
+            <span>離線備份</span>
           </button>
 
           <button

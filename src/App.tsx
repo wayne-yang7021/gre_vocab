@@ -4,6 +4,8 @@ import { Navbar } from './components/Navbar';
 import { FlashcardView } from './components/FlashcardView';
 import { WordListView } from './components/WordListView';
 import { AddWordView } from './components/AddWordView';
+import { BackupModal } from './components/BackupModal';
+import { CloudAccountModal } from './components/CloudAccountModal';
 import { AppView } from './types';
 import { AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,6 +13,8 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('flashcards');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showCloudModal, setShowCloudModal] = useState(false);
 
   const {
     allWords,
@@ -32,7 +36,13 @@ export default function App() {
     customWords,
     addCustomWord,
     deleteCustomWord,
+    exportBackupData,
+    importBackupData,
     progressMap,
+    cloudAccount,
+    loginCloudAccount,
+    logoutCloudAccount,
+    syncCurrentLocalToCloud,
   } = useVocabulary();
 
   const handleStartPracticeWithFilter = (
@@ -60,6 +70,9 @@ export default function App() {
         setCurrentView={setCurrentView}
         stats={stats}
         onReset={handleTriggerReset}
+        onOpenBackupModal={() => setShowBackupModal(true)}
+        cloudAccount={cloudAccount}
+        onOpenCloudModal={() => setShowCloudModal(true)}
       />
 
       {/* Main Body View Content */}
@@ -180,6 +193,26 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Backup and Sync Modal */}
+      <BackupModal
+        isOpen={showBackupModal}
+        onClose={() => setShowBackupModal(false)}
+        onExport={exportBackupData}
+        onImport={importBackupData}
+      />
+
+      {/* Cloud Database Account Modal */}
+      <CloudAccountModal
+        isOpen={showCloudModal}
+        onClose={() => setShowCloudModal(false)}
+        cloudAccount={cloudAccount}
+        onLogin={loginCloudAccount}
+        onLogout={logoutCloudAccount}
+        onSyncLocalToCloud={syncCurrentLocalToCloud}
+        customWordsCount={customWords.length}
+        progressRecordCount={Object.keys(progressMap).length}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 mt-auto">

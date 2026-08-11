@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "usernames": {
+      "title": "Usernames",
+      "description": "Unique username registry to prevent duplicates",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["username", "userId", "createdAt"]
+    },
+    "users": {
+      "title": "Users",
+      "description": "User profiles and account settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "lastActive": { "type": "number" }
+      },
+      "required": ["userId", "username", "createdAt"]
+    },
+    "customWords": {
+      "title": "Custom Words",
+      "description": "User custom vocabulary entries",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "wordId": { "type": "string" },
+        "word": { "type": "string" },
+        "phonetic": { "type": "string" },
+        "paraphrase_pos": { "type": "string" },
+        "isCustom": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "wordId", "word", "paraphrase_pos"]
+    },
+    "userProgress": {
+      "title": "User Progress",
+      "description": "Word review and mastery progress per user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "wordId": { "type": "string" },
+        "status": { "type": "string" },
+        "reviewCount": { "type": "number" },
+        "wrongCount": { "type": "number" },
+        "lastReviewedAt": { "type": "number" }
+      },
+      "required": ["userId", "wordId", "status"]
+    }
+  }
+}
