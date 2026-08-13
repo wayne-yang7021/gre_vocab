@@ -14,6 +14,8 @@ import {
 const STORAGE_KEY = 'vocab_flashcards_progress_v1';
 const CUSTOM_WORDS_KEY = 'vocab_custom_words_v1';
 const CLOUD_USER_KEY = 'vocab_cloud_user_account_v1';
+const CARD_POSITIONS_KEY = 'vocab_flashcards_positions_v2';
+const LAST_FILTER_KEY = 'vocab_flashcards_active_filter_v2';
 
 export function useVocabulary() {
   const builtinWords = useMemo(() => getAllWords(), []);
@@ -154,7 +156,46 @@ export function useVocabulary() {
   // Current active practice mode/filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only'
   const [practiceFilter, setPracticeFilter] = useState<
     'all' | 'learning_only' | 'difficult_only' | 'mastered_only'
-  >('learning_only');
+  >(() => {
+    try {
+      const saved = localStorage.getItem(LAST_FILTER_KEY);
+      if (
+        saved === 'all' ||
+        saved === 'learning_only' ||
+        saved === 'difficult_only' ||
+        saved === 'mastered_only'
+      ) {
+        return saved;
+      }
+    } catch (e) {
+      console.error('Failed to load active filter', e);
+    }
+    return 'learning_only';
+  });
+
+  // Persistent card position map per category
+  const [savedPositions, setSavedPositions] = useState<
+    Record<string, { wordId?: string; index?: number }>
+  >(() => {
+    try {
+      const saved = localStorage.getItem(CARD_POSITIONS_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load card positions from localStorage', e);
+    }
+    return {};
+  });
+
+  // Save practiceFilter to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAST_FILTER_KEY, practiceFilter);
+    } catch (e) {
+      console.error('Failed to save practice filter', e);
+    }
+  }, [practiceFilter]);
 
   // Build current queue based on practice filter in sequential order
   const [queue, setQueue] = useState<Word[]>([]);
@@ -166,7 +207,8 @@ export function useVocabulary() {
   const initQueue = useCallback(
     (
       filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only' = practiceFilter,
-      startWordId?: string
+      startWordId?: string,
+      forceResetIndex: boolean = false
     ) => {
       let filtered: Word[] = [];
 
@@ -189,36 +231,89 @@ export function useVocabulary() {
         filtered = [...allWords];
       }
 
-      // If a specific start word was selected, jump to or bring to front
-      if (startWordId) {
-        const foundIdx = filtered.findIndex((w) => w.id === startWordId);
-        if (foundIdx > 0) {
-          const [selected] = filtered.splice(foundIdx, 1);
-          filtered.unshift(selected);
+      let targetIndex = 0;
+
+      if (!forceResetIndex) {
+        if (startWordId) {
+          const foundIdx = filtered.findIndex((w) => w.id === startWordId);
+          if (foundIdx >= 0) {
+            targetIndex = foundIdx;
+          }
+        } else {
+          // Restore saved card position for this category if available
+          const savedPos = savedPositions[filter];
+          if (savedPos) {
+            if (savedPos.wordId) {
+              const foundIdx = filtered.findIndex((w) => w.id === savedPos.wordId);
+              if (foundIdx >= 0) {
+                targetIndex = foundIdx;
+              } else if (savedPos.index !== undefined && savedPos.index >= 0) {
+                targetIndex = Math.min(savedPos.index, Math.max(0, filtered.length - 1));
+              }
+            } else if (savedPos.index !== undefined && savedPos.index >= 0) {
+              targetIndex = Math.min(savedPos.index, Math.max(0, filtered.length - 1));
+            }
+          }
         }
       }
 
       setPracticeFilter(filter);
       setQueue(filtered);
-      setCurrentIndex(0);
+      setCurrentIndex(targetIndex);
       setIsFlipped(false);
     },
-    [allWords, progressMap, practiceFilter]
+    [allWords, progressMap, practiceFilter, savedPositions]
   );
 
   // Initialize queue once on mount
   useEffect(() => {
     if (!isInitialized && allWords.length > 0) {
-      initQueue('learning_only');
+      initQueue(practiceFilter);
       setIsInitialized(true);
     }
-  }, [allWords, isInitialized, initQueue]);
+  }, [allWords, isInitialized, initQueue, practiceFilter]);
 
   // Current word
   const currentWord = useMemo(() => {
     if (queue.length === 0 || currentIndex >= queue.length) return null;
     return queue[currentIndex];
   }, [queue, currentIndex]);
+
+  // Persist current position whenever word/index changes
+  useEffect(() => {
+    if (currentWord && practiceFilter) {
+      setSavedPositions((prev) => {
+        const updated = {
+          ...prev,
+          [practiceFilter]: {
+            wordId: currentWord.id,
+            index: currentIndex,
+          },
+        };
+        try {
+          localStorage.setItem(CARD_POSITIONS_KEY, JSON.stringify(updated));
+        } catch (e) {
+          console.error('Failed to save card position', e);
+        }
+        return updated;
+      });
+    }
+  }, [practiceFilter, currentWord, currentIndex]);
+
+  // Card navigation helpers
+  const goToNextCard = useCallback(() => {
+    if (currentIndex < queue.length - 1) {
+      setIsFlipped(false);
+      setCurrentIndex((prev) => prev + 1);
+    }
+  }, [currentIndex, queue.length]);
+
+  const goToPrevCard = useCallback(() => {
+    if (currentIndex > 0) {
+      setIsFlipped(false);
+      setCurrentIndex((prev) => prev - 1);
+    }
+  }, [currentIndex]);
 
   // Action: Mark as Mastered ("我會了")
   const markAsMastered = useCallback(() => {
@@ -386,8 +481,11 @@ export function useVocabulary() {
   // Action: Reset all progress (clear all mastered, difficult & learning statuses)
   const resetAllProgress = useCallback(() => {
     setProgressMap({});
+    setSavedPositions({});
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(CARD_POSITIONS_KEY);
+      localStorage.removeItem(LAST_FILTER_KEY);
       localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
     } catch (e) {
       console.error('Failed to clear progress in localStorage', e);
@@ -611,6 +709,8 @@ export function useVocabulary() {
     setWordStatus,
     resetAllProgress,
     initQueue,
+    goToNextCard,
+    goToPrevCard,
     practiceFilter,
     stats,
     learningWords,

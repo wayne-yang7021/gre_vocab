@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Word } from '../types';
 import { speakWord } from '../utils/speech';
-import { Volume2, CheckCircle2, BookmarkX, Sparkles, HelpCircle, RotateCcw } from 'lucide-react';
+import { Volume2, CheckCircle2, BookmarkX, Sparkles, HelpCircle, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FlashcardViewProps {
@@ -12,9 +12,12 @@ interface FlashcardViewProps {
   setIsFlipped: (flipped: boolean | ((prev: boolean) => boolean)) => void;
   onMastered: () => void;
   onLearning: () => void;
+  onNextCard?: () => void;
+  onPrevCard?: () => void;
   onInitQueue: (
     filter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only',
-    startWordId?: string
+    startWordId?: string,
+    forceResetIndex?: boolean
   ) => void;
   onReset: () => void;
   practiceFilter: 'all' | 'learning_only' | 'difficult_only' | 'mastered_only';
@@ -35,6 +38,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
   setIsFlipped,
   onMastered,
   onLearning,
+  onNextCard,
+  onPrevCard,
   onInitQueue,
   onReset,
   practiceFilter,
@@ -220,17 +225,40 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
         </div>
 
         {/* Card Progress Badge & Reset */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto text-xs">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto text-xs flex-wrap">
+          {onPrevCard && (
+            <button
+              onClick={onPrevCard}
+              disabled={currentIndex <= 0}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 border border-slate-700/60 transition-all"
+              title="上一張單字"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+
           <span className="font-mono text-indigo-300 font-semibold px-2.5 py-1 rounded-lg bg-indigo-950/40 border border-indigo-900/50">
             第 {currentIndex + 1} / {totalInQueue} 張
           </span>
+
+          {onNextCard && (
+            <button
+              onClick={onNextCard}
+              disabled={currentIndex >= totalInQueue - 1}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 border border-slate-700/60 transition-all"
+              title="下一張單字"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+
           <button
-            onClick={onReset}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-rose-100 border border-rose-800/60 font-medium transition-colors"
-            title="把所有學習紀錄重置為未學過"
+            onClick={() => onInitQueue(practiceFilter, undefined, true)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-slate-300 font-medium transition-all border border-slate-700/60"
+            title="從該分類的第 1 張卡片重新開始瀏覽"
           >
-            <RotateCcw className="w-3 h-3" />
-            <span>重置進度</span>
+            <RotateCcw className="w-3 h-3 text-indigo-400" />
+            <span>從頭看</span>
           </button>
         </div>
       </div>

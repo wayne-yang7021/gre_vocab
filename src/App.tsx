@@ -28,6 +28,8 @@ export default function App() {
     setWordStatus,
     resetAllProgress,
     initQueue,
+    goToNextCard,
+    goToPrevCard,
     practiceFilter,
     stats,
     learningWords,
@@ -87,7 +89,9 @@ export default function App() {
             setIsFlipped={setIsFlipped}
             onMastered={markAsMastered}
             onLearning={markAsLearning}
-            onInitQueue={(filter, startWordId) => initQueue(filter, startWordId)}
+            onNextCard={goToNextCard}
+            onPrevCard={goToPrevCard}
+            onInitQueue={(filter, startWordId, forceReset) => initQueue(filter, startWordId, forceReset)}
             onReset={handleTriggerReset}
             practiceFilter={practiceFilter}
             stats={stats}
