@@ -70,34 +70,103 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
 
   if (!currentWord || totalInQueue === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 flex items-center justify-center mb-4 shadow-lg">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center animate-fadeIn">
+        <div className="w-16 h-16 rounded-2xl bg-indigo-950/80 text-indigo-400 border border-indigo-800/50 flex items-center justify-center mb-4 shadow-lg">
           <Sparkles className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">太棒了！目前單字皆已練習完畢</h2>
-        <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
-          已學會單字：<span className="text-emerald-400 font-bold">{stats.masteredCount}</span> / {stats.total} 個。<br />
-          若你想重新進行翻卡練習，可點擊下方按鈕將單字全部重置為「未學過」。
-        </p>
+
+        {practiceFilter === 'learning_only' ? (
+          <>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">🎉 「未學過」單字已全部學完一輪！</h2>
+            <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+              目前無新的未學過單字。當您新增自訂單字時，會自動出現在未學過清單中。<br />
+              您可以切換至 <span className="text-rose-400 font-bold">「較不熟 ({stats.difficultCount})」</span> 或 <span className="text-emerald-400 font-bold">「已學會 ({stats.masteredCount})」</span> 繼續進行複習。
+            </p>
+          </>
+        ) : practiceFilter === 'difficult_only' ? (
+          <>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">💪 「較不熟」單字已全部複習完畢！</h2>
+            <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+              太棒了！您已完成這一輪較不熟單字的強化練習。目前較不熟剩餘 <span className="text-rose-400 font-bold">{stats.difficultCount}</span> 個單字。
+            </p>
+          </>
+        ) : practiceFilter === 'mastered_only' ? (
+          <>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">✨ 「已學會」單字已全數瀏覽完畢！</h2>
+            <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+              您已完成了所有已學會單字 ({stats.masteredCount} 個) 的溫習保鮮。
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">太棒了！所有單字皆已練習完畢</h2>
+            <p className="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+              已學會單字：<span className="text-emerald-400 font-bold">{stats.masteredCount}</span> / {stats.total} 個。
+            </p>
+          </>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={onReset}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-semibold rounded-2xl text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>重置所有單字為「未學過」</span>
-          </button>
+          {stats.difficultCount > 0 && practiceFilter !== 'difficult_only' && (
+            <button
+              onClick={() => onInitQueue('difficult_only')}
+              className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-2xl text-sm transition-all shadow-md shadow-rose-950/40 active:scale-95"
+            >
+              <BookmarkX className="w-4 h-4" />
+              <span>複習「較不熟」單字 ({stats.difficultCount})</span>
+            </button>
+          )}
+
+          {stats.masteredCount > 0 && practiceFilter !== 'mastered_only' && (
+            <button
+              onClick={() => onInitQueue('mastered_only')}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-2xl text-sm transition-all shadow-md shadow-emerald-950/40 active:scale-95"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>複習「已學會」單字 ({stats.masteredCount})</span>
+            </button>
+          )}
+
           <button
             onClick={() => onInitQueue('all')}
-            className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-2xl text-sm transition-all border border-slate-700"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-2xl text-sm transition-all border border-slate-700"
           >
             檢視全部單字 ({stats.total})
+          </button>
+
+          <button
+            onClick={onReset}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 hover:border-rose-800 font-medium rounded-2xl text-xs sm:text-sm transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>重置進度</span>
           </button>
         </div>
       </div>
     );
   }
+
+  // Determine button hints according to mode
+  const getButtonHints = () => {
+    if (practiceFilter === 'mastered_only') {
+      return {
+        learningSub: '降級移至「較不熟」分類',
+        masteredSub: '繼續留在「已學會」',
+      };
+    }
+    if (practiceFilter === 'difficult_only') {
+      return {
+        learningSub: '留在「較不熟」於稍後重覆出現',
+        masteredSub: '升級移至「已學會」',
+      };
+    }
+    return {
+      learningSub: '稍後重覆出現 (錯2次移至較不熟)',
+      masteredSub: '歸類至「已學會」清單',
+    };
+  };
+
+  const buttonHints = getButtonHints();
 
   return (
     <div id="flashcard-container" className="flex flex-col items-center justify-center max-w-2xl mx-auto px-4 py-6">
@@ -272,7 +341,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
           <BookmarkX className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
           <div className="text-center sm:text-left">
             <div className="text-base sm:text-lg">我還不會</div>
-            <div className="text-[11px] text-amber-400/70 font-normal">跳過並於稍後自動出現</div>
+            <div className="text-[11px] text-amber-400/70 font-normal">{buttonHints.learningSub}</div>
           </div>
         </button>
 
@@ -284,7 +353,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
           <CheckCircle2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
           <div className="text-center sm:text-left">
             <div className="text-base sm:text-lg">我會了</div>
-            <div className="text-[11px] text-emerald-400/70 font-normal">歸類至「已學會」清單</div>
+            <div className="text-[11px] text-emerald-400/70 font-normal">{buttonHints.masteredSub}</div>
           </div>
         </button>
       </div>

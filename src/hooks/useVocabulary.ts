@@ -252,10 +252,22 @@ export function useVocabulary() {
       colors: ['#10B981', '#3B82F6', '#6366F1'],
     });
 
+    // If currently practicing in difficult_only or learning_only mode, the word is now mastered!
+    // Remove future copies from remaining queue
+    if (practiceFilter === 'difficult_only' || practiceFilter === 'learning_only') {
+      setQueue((prevQueue) => {
+        const before = prevQueue.slice(0, currentIndex + 1);
+        const after = prevQueue
+          .slice(currentIndex + 1)
+          .filter((w) => w.id !== currentWord.id);
+        return [...before, ...after];
+      });
+    }
+
     // Move to next card
     setIsFlipped(false);
     setCurrentIndex((prev) => prev + 1);
-  }, [currentWord, progressMap, cloudAccount]);
+  }, [currentWord, currentIndex, progressMap, cloudAccount, practiceFilter]);
 
   // Action: Mark as Need Review ("我還不會")
   const markAsLearning = useCallback(() => {
@@ -263,11 +275,59 @@ export function useVocabulary() {
 
     const prevItem = progressMap[currentWord.id];
     const prevWrongCount = prevItem?.wrongCount || 0;
-    const newWrongCount = prevWrongCount + 1;
+    const currentStatus = prevItem?.status || (practiceFilter === 'mastered_only' ? 'mastered' : practiceFilter === 'difficult_only' ? 'difficult' : 'learning');
 
-    // If marked "還不會" 2 or more times, automatically classify as "較不熟單字" (difficult)
-    const isNowDifficult = newWrongCount >= 2;
-    const newStatus: WordStatus = isNowDifficult ? 'difficult' : 'learning';
+    let newStatus: WordStatus = 'learning';
+    let newWrongCount = prevWrongCount + 1;
+
+    if (currentStatus === 'mastered' || practiceFilter === 'mastered_only') {
+      // 1. 已學會單字按「我不熟」：直接降級移至「較不熟 (difficult)」分類，不用進入「還不會」
+      newStatus = 'difficult';
+      newWrongCount = Math.max(2, prevWrongCount + 1);
+
+      // 如果是在已學會單字練習模式中，從剩餘佇列中移除該單字（已不再是已學會）
+      if (practiceFilter === 'mastered_only') {
+        setQueue((prevQueue) => {
+          const before = prevQueue.slice(0, currentIndex + 1);
+          const after = prevQueue
+            .slice(currentIndex + 1)
+            .filter((w) => w.id !== currentWord.id);
+          return [...before, ...after];
+        });
+      }
+    } else if (currentStatus === 'difficult' || practiceFilter === 'difficult_only') {
+      // 2. 較不熟單字按「我還不會」：繼續留在「較不熟 (difficult)」類別中，並在佇列中稍後再次複習
+      newStatus = 'difficult';
+      newWrongCount = Math.max(2, prevWrongCount + 1);
+
+      setQueue((prevQueue) => {
+        const newQueue = [...prevQueue];
+        const insertIndex = Math.min(currentIndex + 4, newQueue.length);
+        newQueue.splice(insertIndex, 0, currentWord);
+        return newQueue;
+      });
+    } else {
+      // 3. 未學過單字按「我還不會」：累加錯題數，錯滿 2 次進入較不熟，否則於佇列中重覆出現
+      const isNowDifficult = newWrongCount >= 2;
+      newStatus = isNowDifficult ? 'difficult' : 'learning';
+
+      if (isNowDifficult) {
+        setQueue((prevQueue) => {
+          const before = prevQueue.slice(0, currentIndex + 1);
+          const after = prevQueue
+            .slice(currentIndex + 1)
+            .filter((w) => w.id !== currentWord.id);
+          return [...before, ...after];
+        });
+      } else {
+        setQueue((prevQueue) => {
+          const newQueue = [...prevQueue];
+          const insertIndex = Math.min(currentIndex + 4, newQueue.length);
+          newQueue.splice(insertIndex, 0, currentWord);
+          return newQueue;
+        });
+      }
+    }
 
     const newProgress: WordProgressItem = {
       status: newStatus,
@@ -289,29 +349,10 @@ export function useVocabulary() {
       );
     }
 
-    if (isNowDifficult) {
-      // Remove any future re-inserted copies of currentWord from the rest of the queue
-      setQueue((prevQueue) => {
-        const before = prevQueue.slice(0, currentIndex + 1);
-        const after = prevQueue
-          .slice(currentIndex + 1)
-          .filter((w) => w.id !== currentWord.id);
-        return [...before, ...after];
-      });
-    } else {
-      // First time clicking "還不會": re-insert this word 3-4 cards later in queue
-      setQueue((prevQueue) => {
-        const newQueue = [...prevQueue];
-        const insertIndex = Math.min(currentIndex + 4, newQueue.length);
-        newQueue.splice(insertIndex, 0, currentWord);
-        return newQueue;
-      });
-    }
-
     // Move to next card
     setIsFlipped(false);
     setCurrentIndex((prev) => prev + 1);
-  }, [currentWord, currentIndex, progressMap, cloudAccount]);
+  }, [currentWord, currentIndex, progressMap, cloudAccount, practiceFilter]);
 
   // Action: Manually change status of any word
   const setWordStatus = useCallback(
