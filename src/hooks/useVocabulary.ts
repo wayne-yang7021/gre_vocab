@@ -315,6 +315,19 @@ export function useVocabulary() {
     }
   }, [currentIndex]);
 
+  // Mode-specific strikes tracker (tracks how many times "我還不會" was clicked for each word in each mode)
+  const [modeStrikes, setModeStrikes] = useState<{
+    learning_only: Record<string, number>;
+    difficult_only: Record<string, number>;
+    mastered_only: Record<string, number>;
+    all: Record<string, number>;
+  }>({
+    learning_only: {},
+    difficult_only: {},
+    mastered_only: {},
+    all: {},
+  });
+
   // Action: Mark as Mastered ("我會了")
   const markAsMastered = useCallback(() => {
     if (!currentWord) return;
@@ -332,6 +345,15 @@ export function useVocabulary() {
       [currentWord.id]: newProgress,
     }));
 
+    // Reset strike count for this word in current practice mode
+    setModeStrikes((prev) => ({
+      ...prev,
+      [practiceFilter]: {
+        ...prev[practiceFilter],
+        [currentWord.id]: 0,
+      },
+    }));
+
     // Auto sync to cloud if logged in
     if (cloudAccount) {
       saveProgressToCloud(cloudAccount.userId, currentWord.id, newProgress).catch((e) =>
@@ -347,17 +369,14 @@ export function useVocabulary() {
       colors: ['#10B981', '#3B82F6', '#6366F1'],
     });
 
-    // If currently practicing in difficult_only or learning_only mode, the word is now mastered!
-    // Remove future copies from remaining queue
-    if (practiceFilter === 'difficult_only' || practiceFilter === 'learning_only') {
-      setQueue((prevQueue) => {
-        const before = prevQueue.slice(0, currentIndex + 1);
-        const after = prevQueue
-          .slice(currentIndex + 1)
-          .filter((w) => w.id !== currentWord.id);
-        return [...before, ...after];
-      });
-    }
+    // Remove any future retry copies of this word from remaining queue
+    setQueue((prevQueue) => {
+      const before = prevQueue.slice(0, currentIndex + 1);
+      const after = prevQueue
+        .slice(currentIndex + 1)
+        .filter((w) => w.id !== currentWord.id);
+      return [...before, ...after];
+    });
 
     // Move to next card
     setIsFlipped(false);
@@ -370,18 +389,45 @@ export function useVocabulary() {
 
     const prevItem = progressMap[currentWord.id];
     const prevWrongCount = prevItem?.wrongCount || 0;
-    const currentStatus = prevItem?.status || (practiceFilter === 'mastered_only' ? 'mastered' : practiceFilter === 'difficult_only' ? 'difficult' : 'learning');
+    const currentModeStrikes = (modeStrikes[practiceFilter]?.[currentWord.id] || 0) + 1;
 
-    let newStatus: WordStatus = 'learning';
+    // Random offset between 4 and 10 cards later (4, 5, 6, 7, 8, 9, 10)
+    const randomOffset = Math.floor(Math.random() * 7) + 4;
+
+    let newStatus: WordStatus = prevItem?.status || (practiceFilter === 'mastered_only' ? 'mastered' : practiceFilter === 'difficult_only' ? 'difficult' : 'learning');
     let newWrongCount = prevWrongCount + 1;
 
-    if (currentStatus === 'mastered' || practiceFilter === 'mastered_only') {
-      // 1. 已學會單字按「我不熟」：直接降級移至「較不熟 (difficult)」分類，不用進入「還不會」
-      newStatus = 'difficult';
-      newWrongCount = Math.max(2, prevWrongCount + 1);
+    if (practiceFilter === 'mastered_only') {
+      // 1. 已學會單字練習中按下「我還不會」：
+      if (currentModeStrikes < 2) {
+        // 第 1 次按不會：仍維持在「已學會」，在後面 4~10 張隨機插入再出現一次
+        newStatus = 'mastered';
+        setModeStrikes((prev) => ({
+          ...prev,
+          mastered_only: {
+            ...prev.mastered_only,
+            [currentWord.id]: currentModeStrikes,
+          },
+        }));
 
-      // 如果是在已學會單字練習模式中，從剩餘佇列中移除該單字（已不再是已學會）
-      if (practiceFilter === 'mastered_only') {
+        setQueue((prevQueue) => {
+          const newQueue = [...prevQueue];
+          const insertIndex = Math.min(currentIndex + randomOffset, newQueue.length);
+          newQueue.splice(insertIndex, 0, currentWord);
+          return newQueue;
+        });
+      } else {
+        // 第 2 次按不會：正式降級歸類為「較不熟 (difficult)」，從已學會剩餘佇列中移除
+        newStatus = 'difficult';
+        newWrongCount = Math.max(2, prevWrongCount + 1);
+        setModeStrikes((prev) => ({
+          ...prev,
+          mastered_only: {
+            ...prev.mastered_only,
+            [currentWord.id]: 0,
+          },
+        }));
+
         setQueue((prevQueue) => {
           const before = prevQueue.slice(0, currentIndex + 1);
           const after = prevQueue
@@ -390,36 +436,62 @@ export function useVocabulary() {
           return [...before, ...after];
         });
       }
-    } else if (currentStatus === 'difficult' || practiceFilter === 'difficult_only') {
-      // 2. 較不熟單字按「我還不會」：繼續留在「較不熟 (difficult)」類別中，並在佇列中稍後再次複習
+    } else if (practiceFilter === 'difficult_only') {
+      // 2. 較不熟單字練習中按下「我還不會」：
+      // 獨立於已學會，維持在「較不熟」，在後面 4~10 張隨機位置再次出現複習
       newStatus = 'difficult';
       newWrongCount = Math.max(2, prevWrongCount + 1);
+      setModeStrikes((prev) => ({
+        ...prev,
+        difficult_only: {
+          ...prev.difficult_only,
+          [currentWord.id]: currentModeStrikes,
+        },
+      }));
 
       setQueue((prevQueue) => {
         const newQueue = [...prevQueue];
-        const insertIndex = Math.min(currentIndex + 4, newQueue.length);
+        const insertIndex = Math.min(currentIndex + randomOffset, newQueue.length);
         newQueue.splice(insertIndex, 0, currentWord);
         return newQueue;
       });
     } else {
-      // 3. 未學過單字按「我還不會」：累加錯題數，錯滿 2 次進入較不熟，否則於佇列中重覆出現
-      const isNowDifficult = newWrongCount >= 2;
-      newStatus = isNowDifficult ? 'difficult' : 'learning';
+      // 3. 未學過 / 全部單字練習中按下「我還不會」：
+      if (currentModeStrikes < 2) {
+        // 第 1 次按不會：在後面 4~10 張隨機位置再次出現
+        newStatus = 'learning';
+        setModeStrikes((prev) => ({
+          ...prev,
+          [practiceFilter]: {
+            ...prev[practiceFilter],
+            [currentWord.id]: currentModeStrikes,
+          },
+        }));
 
-      if (isNowDifficult) {
+        setQueue((prevQueue) => {
+          const newQueue = [...prevQueue];
+          const insertIndex = Math.min(currentIndex + randomOffset, newQueue.length);
+          newQueue.splice(insertIndex, 0, currentWord);
+          return newQueue;
+        });
+      } else {
+        // 第 2 次按不會：正式歸類為「較不熟 (difficult)」，從未學過剩餘佇列中移除
+        newStatus = 'difficult';
+        newWrongCount = Math.max(2, prevWrongCount + 1);
+        setModeStrikes((prev) => ({
+          ...prev,
+          [practiceFilter]: {
+            ...prev[practiceFilter],
+            [currentWord.id]: 0,
+          },
+        }));
+
         setQueue((prevQueue) => {
           const before = prevQueue.slice(0, currentIndex + 1);
           const after = prevQueue
             .slice(currentIndex + 1)
             .filter((w) => w.id !== currentWord.id);
           return [...before, ...after];
-        });
-      } else {
-        setQueue((prevQueue) => {
-          const newQueue = [...prevQueue];
-          const insertIndex = Math.min(currentIndex + 4, newQueue.length);
-          newQueue.splice(insertIndex, 0, currentWord);
-          return newQueue;
         });
       }
     }
@@ -447,7 +519,7 @@ export function useVocabulary() {
     // Move to next card
     setIsFlipped(false);
     setCurrentIndex((prev) => prev + 1);
-  }, [currentWord, currentIndex, progressMap, cloudAccount, practiceFilter]);
+  }, [currentWord, currentIndex, progressMap, cloudAccount, practiceFilter, modeStrikes]);
 
   // Action: Manually change status of any word
   const setWordStatus = useCallback(
@@ -697,11 +769,43 @@ export function useVocabulary() {
     return allWords.filter((w) => !progressMap[w.id]);
   }, [allWords, progressMap]);
 
+  // Calculate unique words progress for the current practice session
+  const { uniqueWordNumber, totalUniqueWords } = useMemo(() => {
+    if (queue.length === 0) {
+      return { uniqueWordNumber: 0, totalUniqueWords: 0 };
+    }
+
+    // Total distinct words in this queue
+    const allUniqueIds = new Set(queue.map((w) => w.id));
+    const totalUnique = allUniqueIds.size;
+
+    // Remaining distinct words to review from currentIndex to the end
+    const remainingWordIds = new Set(queue.slice(currentIndex).map((w) => w.id));
+
+    // Distinct words that appeared before currentIndex and are no longer in the remaining queue
+    // (i.e., their review has completed: marked mastered, or marked difficult on 2nd strike)
+    const pastWordIds = new Set(queue.slice(0, currentIndex).map((w) => w.id));
+    let settledCount = 0;
+    for (const id of pastWordIds) {
+      if (!remainingWordIds.has(id)) {
+        settledCount++;
+      }
+    }
+
+    const currentNumber = Math.min(settledCount + 1, totalUnique);
+    return {
+      uniqueWordNumber: currentNumber,
+      totalUniqueWords: totalUnique,
+    };
+  }, [queue, currentIndex]);
+
   return {
     allWords,
     currentWord,
     currentIndex,
     totalInQueue: queue.length,
+    uniqueWordNumber,
+    totalUniqueWords,
     isFlipped,
     setIsFlipped,
     markAsMastered,

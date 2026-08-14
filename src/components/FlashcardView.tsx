@@ -8,6 +8,8 @@ interface FlashcardViewProps {
   currentWord: Word | null;
   currentIndex: number;
   totalInQueue: number;
+  uniqueWordNumber?: number;
+  totalUniqueWords?: number;
   isFlipped: boolean;
   setIsFlipped: (flipped: boolean | ((prev: boolean) => boolean)) => void;
   onMastered: () => void;
@@ -34,6 +36,8 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
   currentWord,
   currentIndex,
   totalInQueue,
+  uniqueWordNumber,
+  totalUniqueWords,
   isFlipped,
   setIsFlipped,
   onMastered,
@@ -155,19 +159,19 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
   const getButtonHints = () => {
     if (practiceFilter === 'mastered_only') {
       return {
-        learningSub: '降級移至「較不熟」分類',
+        learningSub: '4~10張後再次出現 (按2次移至較不熟)',
         masteredSub: '繼續留在「已學會」',
       };
     }
     if (practiceFilter === 'difficult_only') {
       return {
-        learningSub: '留在「較不熟」於稍後重覆出現',
-        masteredSub: '升級移至「已學會」',
+        learningSub: '4~10張後再次出現 (維持較不熟)',
+        masteredSub: '掌握並升級至「已學會」',
       };
     }
     return {
-      learningSub: '稍後重覆出現 (錯2次移至較不熟)',
-      masteredSub: '歸類至「已學會」清單',
+      learningSub: '4~10張後再次出現 (按2次移至較不熟)',
+      masteredSub: '掌握並歸類至「已學會」',
     };
   };
 
@@ -238,7 +242,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
           )}
 
           <span className="font-mono text-indigo-300 font-semibold px-2.5 py-1 rounded-lg bg-indigo-950/40 border border-indigo-900/50">
-            第 {currentIndex + 1} / {totalInQueue} 張
+            第 {uniqueWordNumber !== undefined ? uniqueWordNumber : currentIndex + 1} / {totalUniqueWords !== undefined ? totalUniqueWords : totalInQueue} 個單字
           </span>
 
           {onNextCard && (

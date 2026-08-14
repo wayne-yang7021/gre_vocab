@@ -21,6 +21,8 @@ export default function App() {
     currentWord,
     currentIndex,
     totalInQueue,
+    uniqueWordNumber,
+    totalUniqueWords,
     isFlipped,
     setIsFlipped,
     markAsMastered,
@@ -85,6 +87,8 @@ export default function App() {
             currentWord={currentWord}
             currentIndex={currentIndex}
             totalInQueue={totalInQueue}
+            uniqueWordNumber={uniqueWordNumber}
+            totalUniqueWords={totalUniqueWords}
             isFlipped={isFlipped}
             setIsFlipped={setIsFlipped}
             onMastered={markAsMastered}
