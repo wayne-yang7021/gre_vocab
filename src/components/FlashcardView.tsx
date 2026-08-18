@@ -165,7 +165,7 @@ export const FlashcardView: React.FC<FlashcardViewProps> = ({
     }
     if (practiceFilter === 'difficult_only') {
       return {
-        learningSub: '4~10張後再次出現 (維持較不熟)',
+        learningSub: '4~10張後再次出現 (按2次維持較不熟)',
         masteredSub: '掌握並升級至「已學會」',
       };
     }

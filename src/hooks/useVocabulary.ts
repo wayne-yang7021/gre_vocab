@@ -438,23 +438,44 @@ export function useVocabulary() {
       }
     } else if (practiceFilter === 'difficult_only') {
       // 2. 較不熟單字練習中按下「我還不會」：
-      // 獨立於已學會，維持在「較不熟」，在後面 4~10 張隨機位置再次出現複習
-      newStatus = 'difficult';
-      newWrongCount = Math.max(2, prevWrongCount + 1);
-      setModeStrikes((prev) => ({
-        ...prev,
-        difficult_only: {
-          ...prev.difficult_only,
-          [currentWord.id]: currentModeStrikes,
-        },
-      }));
+      // 獨立於已學會，最多出現 2 次；第 2 次仍不會則繼續留在「較不熟」，不再重覆插入
+      if (currentModeStrikes < 2) {
+        // 第 1 次按不會：維持在「較不熟」，在後面 4~10 張隨機位置再次出現複習
+        newStatus = 'difficult';
+        setModeStrikes((prev) => ({
+          ...prev,
+          difficult_only: {
+            ...prev.difficult_only,
+            [currentWord.id]: currentModeStrikes,
+          },
+        }));
 
-      setQueue((prevQueue) => {
-        const newQueue = [...prevQueue];
-        const insertIndex = Math.min(currentIndex + randomOffset, newQueue.length);
-        newQueue.splice(insertIndex, 0, currentWord);
-        return newQueue;
-      });
+        setQueue((prevQueue) => {
+          const newQueue = [...prevQueue];
+          const insertIndex = Math.min(currentIndex + randomOffset, newQueue.length);
+          newQueue.splice(insertIndex, 0, currentWord);
+          return newQueue;
+        });
+      } else {
+        // 第 2 次按不會：維持在「較不熟 (difficult)」，不再重覆插入，繼續換下一個單字
+        newStatus = 'difficult';
+        newWrongCount = Math.max(2, prevWrongCount + 1);
+        setModeStrikes((prev) => ({
+          ...prev,
+          difficult_only: {
+            ...prev.difficult_only,
+            [currentWord.id]: 0,
+          },
+        }));
+
+        setQueue((prevQueue) => {
+          const before = prevQueue.slice(0, currentIndex + 1);
+          const after = prevQueue
+            .slice(currentIndex + 1)
+            .filter((w) => w.id !== currentWord.id);
+          return [...before, ...after];
+        });
+      }
     } else {
       // 3. 未學過 / 全部單字練習中按下「我還不會」：
       if (currentModeStrikes < 2) {
